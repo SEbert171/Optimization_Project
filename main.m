@@ -1,3 +1,4 @@
+
 clear clc;
 
 import casadi.*
@@ -66,12 +67,16 @@ max_constraint_violation = 10 ^(-4);
 
 tic
 
+
 if Use_Ipopt_solver
     [rguess, constraint_violation] = Ipopt_solve_NLPs(f,g,gamma,max_constraint_violation,max_NLP_iterations, iguess);
 else
     [rguess, constraint_violation] = solve_Penalty_NLP_Newton(f,g,gamma,max_constraint_violation,max_NLP_iterations, iguess, e);
 end
 time_elapsed = toc;
+
+
+
 % displaying the results
 % rguess(:,n+1)=[];
 
@@ -107,4 +112,3 @@ disp(['Objective Function Minimum Value after Optimization: %f\n\n', full(f_eval
 fprintf('Norm of the constraint violation: %f\n\n', norm(constraint_violation));
 
 
-disp(['Solution time was ',num2str(time_elapsed),' seconds'])
