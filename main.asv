@@ -1,4 +1,3 @@
-
 clear clc;
 
 import casadi.*
@@ -11,7 +10,7 @@ Y = casadi.MX(1,1);
 
 %use full Casadi_Ipopt implementation, otherwise fall back to our
 %Newton-implementation
-Use_Ipopt_solver = false;
+Use_Ipopt_solver = true;
 
 %maximum number of NLP iterations:
 max_NLP_iterations = 30;
@@ -23,7 +22,7 @@ max_Newton_iterations = 30;
 test_function_type='ackley';
 
 %show 3dplot--> very calculation hungry but good to see whats wrong
-Show3dplot=false;
+Show3dplot=true;
 
 
 
@@ -51,7 +50,7 @@ g_eval = Function('g',{[X,Y]},{g});
 
 
 % starting point
-iguess= [-2.7;-1.3]; % try -5;-5, -4;-4, -3;-3 ...
+iguess= [-5;-1]; % try -5;-5, -4;-4, -3;-3 ...
 x=iguess(1);
 y=iguess(2);
 
@@ -63,20 +62,50 @@ e = 10^(-10);
 
 %maximum constraint violation
 max_constraint_violation = 10 ^(-4);
-
-
 tic
 
 
+
+
+
+
+
 if Use_Ipopt_solver
-    [rguess, constraint_violation] = Ipopt_solve_NLPs(f,g,gamma,max_constraint_violation,max_NLP_iterations, iguess);
+    rguess = Ipopt_solve_NLPs(f,g,gamma,max_constraint_violation,max_NLP_iterations, iguess);
 else
-    [rguess, constraint_violation] = solve_Penalty_NLP_Newton(f,g,gamma,max_constraint_violation,max_NLP_iterations, iguess, e);
+    % jacobian and hessian derivatives of penalty function F=f+0.5*gamma*(g^2)
+    [Jp,Hp] = penalty_derivatives(f,g,iguess,gamma);
+
+
+
+
+
+    rguess=iguess; %rguess -> record guesses; iguess -> initial guess
+
+    n=0;
+    k=1;
+    while (norm(Jp)>10^(-10-k+1) && n<=max_NLP_iterations)
+    l=0;
+    while (norm(Jp) > e && l<= max_Newton_iterations)
+        disp(['Newton iteration: ',num2str(l),' for NLP-iteration ',num2str(n)]);
+        [Jp,Hp] = penalty_derivatives(f,g,iguess,gamma);
+        %S=inv(Hp); % Search direction--> not needed because one can solve
+        %the linear system directly
+        iguess = iguess - Hp\Jp;
+        rguess=iguess;
+        l=l+1;
+    end
+ constraint_violation = subs(g,[X,Y], [rguess(1),rguess(2)]);
+ if (norm(Jp) <= 10^(-10-k+1) && norm(constraint_violation) <= max_constraint_violation)
+     break
+ end
+ n=n+1;
+ k=k+1;
+ gamma=gamma*10;
+ [Jp,Hp] = penalty_derivatives(f,g,rguess,gamma);
+    end
 end
 time_elapsed = toc;
-
-
-
 % displaying the results
 % rguess(:,n+1)=[];
 
@@ -84,7 +113,7 @@ time_elapsed = toc;
 figure(1)
 fcontour(f_sym, 'Fill', 'On');
 hold on;
-plot(rguess(1),rguess(2),'*-r');
+plot(iguess(1),'*-r');
 grid on;
 fimplicit(g_sym,'r');
 colorbar
@@ -100,15 +129,16 @@ colorbar
 end
 
 % output:
-disp(['Initial Objective Function Value: %d\n\n',full(f_eval(starting_point))]);
+fprintf('Initial Objective Function Value: %d\n\n',subs(f,[X,Y], [x,y]));
 if (norm(Jp) < e)
  fprintf('Minimum succesfully obtained...\n\n');
 end
 
 fprintf('Number of Iterations for Convergence: %d\n\n', n);
-fprintf('Point of Minima: [%f,%f]\n\n', rguess(1), rguess(2));
-disp(['Objective Function Minimum Value after Optimization: %f\n\n', full(f_eval(rguess))]);
+fprintf('Point of Minima: [%f,%f]\n\n', iguess(1), iguess(2));
+fprintf('Objective Function Minimum Value after Optimization: %f\n\n', subs(f,[X,Y], [iguess(1),iguess(2)]));
 
 fprintf('Norm of the constraint violation: %f\n\n', norm(constraint_violation));
 
 
+disp(['Solution time was ',num2str(time_elapsed),' seconds'])
