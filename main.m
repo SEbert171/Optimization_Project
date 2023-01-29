@@ -29,7 +29,7 @@ g = X^2+Y^2-25;
 
 
 % starting point
-iguess= [-3;-2]; % try -5;-5, -4;-4, -3;-3 ...
+iguess= [-5;-1]; % try -5;-5, -4;-4, -3;-3 ...
 x=iguess(1);
 y=iguess(2);
 
