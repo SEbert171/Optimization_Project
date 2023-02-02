@@ -1,114 +1,91 @@
-
-clear clc;
+clc;
 
 import casadi.*
-syms X_sym Y_sym
+opti = casadi.Opti();
 
-X = casadi.MX(1,1);
-Y = casadi.MX(1,1);
+X = opti.variable();
+Y = opti.variable();
+z = [X;Y]; 
 
 %Settings
-
-%use full Casadi_Ipopt implementation, otherwise fall back to our
-%Newton-implementation
-Use_Ipopt_solver = false;
-
 %maximum number of NLP iterations:
 max_NLP_iterations = 30;
-
-%maximum number of Newton iterations:
-max_Newton_iterations = 30;
-
 %test_function_type: ackley and rastrigin are possible
 test_function_type='ackley';
-
 %show 3dplot--> very calculation hungry but good to see whats wrong
-Show3dplot=false;
+Show3dplot=true;
 
-
-
-%Define objective and constraint functions
-% ackley function
 if (strcmp(test_function_type, 'ackley'))
-    f = -20*exp(-0.2*sqrt(0.5*(X^2+Y^2)))-exp(0.5*(cos(2*pi*X)+cos(2*pi*Y)))+exp(1)+20;
-    f_sym = -20*exp(-0.2*sqrt(0.5*(X_sym^2+Y_sym^2)))-exp(0.5*(cos(2*pi*X_sym)+cos(2*pi*Y_sym)))+exp(1)+20;
+    f = -20*exp(-0.2*sqrt(0.5*(X^2+Y^2)))-exp(0.5*(cos(2*pi*X)+cos(2*pi*Y)))+exp(1)+20; % ackley function
+    g = X^2+Y^2-25; % constraint function for ackley
 elseif (strcmp(test_function_type, 'rastrigin'))
-    f = 20+X^2-10*cos(2*pi*X)+Y^2-10*cos(2*pi*Y);
-    f_sym = 20+X_sym^2-10*cos(2*pi*X_sym)+Y_sym^2-10*cos(2*pi*Y_sym);
+    f = 20+X^2-10*cos(2*pi*X)+Y^2-10*cos(2*pi*Y); % rastrigin function
+    g = X^2+Y^2-26.2144; % constraint function for rastrigin
 else
     msg='Test function not recognized. Use ackley or rastrigin.';
     error(msg);
 end
 
-
-% constraint function
-g = X^2+Y^2-25;
-g_sym = X_sym^2+Y_sym^2-25;
-
-%Casadi functions for being able to evaluate f and g
-f_eval = Function('f',{[X,Y]},{f});
-g_eval = Function('g',{[X,Y]},{g});
-
-
 % starting point
-iguess= [-2.7;-1.3]; % try -5;-5, -4;-4, -3;-3 ...
+iguess= [3;3]; % try -5;-5, -4;-4, -3;-3 ...
 x=iguess(1);
 y=iguess(2);
 
-% starting penalty parameter
-gamma=10;
-
-% convergence criteria for newton method
-e = 10^(-10);
-
-%maximum constraint violation
-max_constraint_violation = 10 ^(-4);
-
+% penalty parameter
+gamma0=1;
 
 tic
+% jacobian derivative of penalty function F=f+0.5*gamma*(g^2)
+[Jp] = penalty_derivatives(iguess,gamma0);
 
+k=1;
+while (norm(Jp)>10^(-10-k+1) && n<=max_NLP_iterations)
+ 
+ opti.minimize(f+0.5*gamma0*(g^2))
+ opti.solver('ipopt');
+ sol = opti.solve();
+ 
+ x=sol.value(X);
+ y=sol.value(Y);
+ iguess=[x;y];
+ gamma0=gamma0*10;
+ 
+ [Jp] = penalty_derivatives(iguess,gamma0);
 
-if Use_Ipopt_solver
-    [rguess, constraint_violation] = Ipopt_solve_NLPs(f,g,gamma,max_constraint_violation,max_NLP_iterations, iguess);
-else
-    [rguess, constraint_violation] = solve_Penalty_NLP_Newton(f,g,gamma,max_constraint_violation,max_NLP_iterations, iguess, e);
+ if (norm(Jp) <= 10^(-10-k+1) || k==15)
+     break
+ end
+ k=k+1;
 end
+
 time_elapsed = toc;
 
-
-
 % displaying the results
-% rguess(:,n+1)=[];
 
 % plots:
 figure(1)
-fcontour(f_sym, 'Fill', 'On');
+fcontour(f, 'Fill', 'On');
 hold on;
-plot(rguess(1),rguess(2),'*-r');
+plot(rguess(1,:),rguess(2,:),'*-r');
 grid on;
-fimplicit(g_sym,'r');
+fimplicit(g,'r');
 colorbar
 
 if(Show3dplot)
 figure(2)
-fmesh(f_sym)
+fmesh(f)
 hold on;
-plot3(rguess(1,:),rguess(2,:),subs(f,[X,Y], [rguess(1),rguess(2)]),'*-r');
+plot3(iguess(1,:),iguess(2,:),subs(f,[X,Y], [iguess(1),iguess(2)]),'*-r');
 grid on
 fimplicit3([g,0])
 colorbar
 end
 
 % output:
-disp(['Initial Objective Function Value: %d\n\n',full(f_eval(starting_point))]);
-if (norm(Jp) < e)
- fprintf('Minimum succesfully obtained...\n\n');
-end
+fprintf('Initial Objective Function Value: %d\n\n',subs(f,[X,Y], [x,y]));
 
-fprintf('Number of Iterations for Convergence: %d\n\n', n);
-fprintf('Point of Minima: [%f,%f]\n\n', rguess(1), rguess(2));
-disp(['Objective Function Minimum Value after Optimization: %f\n\n', full(f_eval(rguess))]);
+fprintf('Number of Iterations for Convergence: %d\n\n', k);
+fprintf('Point of Minima: [%f,%f]\n\n', iguess(1), iguess(2));
+fprintf('Objective Function Minimum Value after Optimization: %f\n\n', subs(f,[X,Y], [iguess(1),iguess(2)]));
 
-fprintf('Norm of the constraint violation: %f\n\n', norm(constraint_violation));
-
-
+disp(['Solution time was ',num2str(time_elapsed),' seconds']);
