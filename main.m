@@ -27,7 +27,7 @@ else
 end
 
 % starting point
-iguess= [3;3]; % try -5;-5, -4;-4, -3;-3 ...
+iguess= [-3;3]; % try -5;-5, -4;-4, -3;-3 ...
 x=iguess(1);
 y=iguess(2);
 
@@ -39,8 +39,7 @@ tic
 [Jp] = penalty_derivatives(iguess,gamma0);
 
 k=1;
-while (norm(Jp)>10^(-10-k+1) && n<=max_NLP_iterations)
- 
+while (norm(Jp)>10^(-10-k+1) && k-1<=max_NLP_iterations)
  opti.minimize(f+0.5*gamma0*(g^2))
  opti.solver('ipopt');
  sol = opti.solve();
