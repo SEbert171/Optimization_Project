@@ -1,7 +1,7 @@
-function [Jf,Hf] = penalty_derivatives(f,g,iguess,gamma)
+function [Jf,Hf] = penalty_derivatives(F,iguess)
     syms X Y
     % adding the objective and constraint function
-    F=f+0.5*gamma*(g^2);
+    %F=f+0.5*gamma*(g^2);
     
     % calcualting the Jacobian for the function F
     df_dx=diff(F,X); df_dy=diff(F,Y);
