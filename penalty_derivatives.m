@@ -1,27 +1,16 @@
-function [Jf] = penalty_derivatives(iguess,gamma0)
- import casadi.*
- X = MX.sym('X',1);
- Y = MX.sym('Y',1);
- 
- % optimize w.r.t. z
- z = [X;Y]; 
- 
- % parameter – penalty parameter
- gamma = MX.sym('gamma',1);
- 
- % ackley function
- f = -20*exp(-0.2*sqrt(0.5*(X^2+Y^2)))-exp(0.5*(cos(2*pi*X)+cos(2*pi*Y)))+exp(1)+20;
- 
- % constraint function for ackley
- g = X^2+Y^2-25;
- 
- % adding the objective and constraint function
- F=f+0.5*gamma*(g^2);
- JF = F.jacobian(z);
- 
- % create casadi function
- JF_fun = Function('JF_fun',{z,gamma},{JF});
-
- % calcualting the Jacobian for the function F
- Jf=full(JF_fun(iguess,gamma0));
+function [Jf,Hf] = penalty_derivatives(F,iguess)
+    syms X Y
+    % adding the objective and constraint function
+    %F=f+0.5*gamma*(g^2);
+    
+    % calcualting the Jacobian for the function F
+    df_dx=diff(F,X); df_dy=diff(F,Y);
+    Jf=[df_dx; df_dy];
+    Jf=subs(Jf,[X,Y],[iguess(1),iguess(2)]);
+    
+    % calculating th Hessian for the function F
+    ddf_dxx=diff(df_dx,X); ddf_dxy=diff(df_dx, Y);
+    ddf_dyx=diff(df_dy,X); ddf_dyy=diff(df_dy, Y);
+    Hf = [ddf_dxx, ddf_dxy; ddf_dyx, ddf_dyy];
+    Hf=vpa(subs(Hf, [X,Y],[iguess(1),iguess(2)]),3);
 end
