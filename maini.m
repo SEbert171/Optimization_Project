@@ -14,6 +14,9 @@ g = X^2+Y^2-25; % constraint function for ackley
 
 opti.minimize(f)
  
+opti.set_initial(X, -1);
+opti.set_initial(Y, -1);
+
 opti.subject_to(g==0)
 
 opti.solver('ipopt');
