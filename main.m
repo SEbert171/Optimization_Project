@@ -3,16 +3,16 @@ syms X Y
 
 %Settings
 %maximum number of NLP iterations:
-max_NLP_iterations =20;
+max_NLP_iterations =7;
 %maximum number of Newton iterations:
 max_Newton_iterations = 10;
 max_line_search_iterations = 5;
 %test_function_type: ackley and rastrigin are possible
 test_function_type='ackley';
 %search method type: exact_Newton or constraint_Newton are possible
-search_method = 'constraint_Newton'
+search_method = 'exact_Newton';
 %show 3dplot--> very calculation hungry but good to see whats wrong
-Show3dplot=true;
+Show3dplot=false;
 
 if (strcmp(test_function_type, 'ackley'))
     f = -20*exp(-0.2*sqrt(0.5*(X^2+Y^2+1e-6)))-exp(0.5*(cos(2*pi*X)+cos(2*pi*Y)))+exp(1)+20; % ackley function
@@ -26,7 +26,7 @@ else
 end
 
 % starting point
-iguess= [0;0]; % try -5;-5, -4;-4, -3;-3 ...
+iguess= [0.6;1.9]; % try -5;-5, -4;-4, -3;-3 ...
 x=iguess(1);
 y=iguess(2);
 solution_points = iguess;
@@ -37,7 +37,7 @@ gamma=10;
 
 
 % convergence criteria for newton method
-e = 10^(-10);
+e = 10^(-20);
 
 % %maximum constraint violation
 % max_constraint_violation = 10 ^(-4);
@@ -53,7 +53,7 @@ k=1;
 
 tic
 
-while (norm(constraint_violation(n+1))>10^(-10) && n<=max_NLP_iterations)
+while (norm(constraint_violation(n+1))>10^(-20-k+1) && n<=max_NLP_iterations)
     l=0;
     while (double(norm(penalty_derivatives(F,iguess))) > e && l<= max_Newton_iterations)
         disp(['Newton iteration: ',num2str(l),' for NLP-iteration ',num2str(n)]);
@@ -83,8 +83,9 @@ while (norm(constraint_violation(n+1))>10^(-10) && n<=max_NLP_iterations)
         iguess = iguess + t*search_direction;
         rguess=iguess;
         l=l+1;
+        
     end
-    solution_points = [solution_points,rguess];
+    solution_points = [solution_points, rguess];
     constraint_violation = [constraint_violation, norm(subs(g,[X,Y],[rguess(1),rguess(2)]))];
  if (norm(constraint_violation) <= 10^(-20-k+1))
      break
@@ -112,7 +113,7 @@ title('first convergence steps of the algorithm')
 
 
 
- %plot with meshgrid (with bugs)
+ %plot with meshgrid
  if Show3dplot
     [X1,Y1] = meshgrid(-5:0.1:5,-5:0.1:5);
     Z = -20*exp(-0.2*sqrt(0.5*(X1^2+Y1^2+1e-6)))-exp(0.5*(cos(2*pi*X1)+cos(2*pi*Y1)))+exp(1)+20; % ackley function
@@ -124,29 +125,28 @@ title('first convergence steps of the algorithm')
     %hold off
     figure(3)
     surf(X1,Y1,g1)%plot of g
-    title('Plot of the penalty function g')
+    title('Plot of the penalty function 0.5*mu*|g|^2')
     figure(4)
-    title('Plot of F=f+gamma*g for different values of gamma')
     subplot(2,2,1)
     gamma = 0.01;
     Z1 = Z+gamma*g1;
     surf(X1,Y1,Z+Z1)%plot of F
-    title('gamma=0.01')
+    title('mu=0.01')
     subplot(2,2,2)
     gamma = 0.1;
     Z1 = Z+gamma*g1;
     surf(X1,Y1,Z+Z1)%plot of F
-    title('gamma=0.1')
+    title('mu=0.1')
     subplot(2,2,3)
     gamma = 1;
     Z1 = Z+gamma*g1;
     surf(X1,Y1,Z+Z1)%plot of F
-    title('gamma=1')
+    title('mu=1')
     subplot(2,2,4)
     gamma = 10;
     Z1 = Z+gamma*g1;
     surf(X1,Y1,Z+Z1)%plot of F
-    title('gamma=10')
+    title('mu=10')
     figure(6)
     surf(X1,Y1,Z)
     title('Plot of the objective function f')
@@ -157,10 +157,23 @@ title('first convergence steps of the algorithm')
 
 
  figure(5)
- semilogy(0:n,constraint_violation,"-o")
- title('Convergence of the constraint violation for every NLP-step')
+ semilogy(0:length(constraint_violation)-1,constraint_violation,"-o")
+ title('Convergence of the constraint violation')
  xlabel('NLP-steps')
  ylabel('constraint violation')
+
+ %Only for solution point [0,5]!!
+ %error = ones(1,length(solution_points));
+ %difference = ones(2,length(solution_points));
+%for i = 1:length(solution_points)
+%difference(:,i) = solution_points(:,i)-[0;5];
+%error(i)= norm([difference(1,i) difference(2,i)]);
+%end
+ %figure(7)
+ %semilogy(0:length(solution_points)-1,error,"-o")
+ %title('Convergence of the error from the solution')
+ %xlabel('NLP-steps')
+ %ylabel('error')
 
 % output:
 fprintf('Initial Objective Function Value: %d\n\n',subs(f,[X,Y], [x,y]));
