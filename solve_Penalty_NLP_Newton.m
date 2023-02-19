@@ -1,34 +1,35 @@
-function [rguess,constraint_violation] = solve_Penalty_NLP_Newton(f,g,gamma,max_constraint_violation, max_NLP_iterations, iguess, Newton_terminal_condition)
-%UNTITLED4 Summary of this function goes here
-%   Detailed explanation goes here
-    import casadi.*
-
-    X = casadi.MX.sym('x');
-    Y = casadi.MX.sym('y');
-    g_eval = Function('g',{[X,Y]},{g});
+function [rguess] = solve_Penalty_NLP_Newton(F, iguess, Newton_terminal_condition, max_Newton_iterations, max_line_search_iterations)
+%Solves the Penalty NLP using the exact Newton step (calculating the
+%derivatives using Casadi). F is the penalty function (f+0.5*gamma*g^2) and
+%iguess is the initial guess for the Newton iteration. Returns the new
+%approximation for a minimum
 
 
-    rguess=iguess; %rguess -> record guesses; iguess -> initial guess
-    [Jp,~] = penalty_derivatives_old(f,g,iguess,gamma);
-    n=0;
+[Jp,Hp] = calculate_derivatives(F,iguess);
+n=1;
+while (norm(Jp)> Newton_terminal_condition && n<=max_Newton_iterations)
+    disp(['    Newton iteration: ',num2str(n)]);
+    search_direction = (-Hp\Jp.');
+    %Line search with Armijo Backtracking
+    t=1;
     k=1;
-    %NLP step
-    while (n<=max_NLP_iterations)
-        l=0;
-        %Newton step
-        while (norm(Jp) > Newton_terminal_condition && l<= max_Newton_iterations)
-            disp(['Newton iteration: ',num2str(l),' for NLP-iteration ',num2str(n)]);
-            [Jp,Hp] = penalty_derivatives_old(f,g,iguess,gamma);%still uses the old derivative calculation
-            iguess = iguess - Hp\Jp;
-            rguess=iguess;
-            l=l+1;
-        end
-        constraint_violation = full(evalf(g_eval(rguess)));
-        if (norm(Jp) <= 10^(-10-k+1) && norm(constraint_violation) <= max_constraint_violation)
-            break
-        end
-        n=n+1;
-        k=k+1;
-        gamma=gamma*10;
+    while (full(F(iguess(1)+t*search_direction(1),iguess(2)+t*search_direction(2))) >= double(full(F(iguess(1),iguess(2))+0.1*Jp*search_direction))  && k<=max_line_search_iterations )
+          t=0.8*t;
+          k = k+1;
     end
+    disp(['         Step length was: ',num2str(t)])
+    iguess = iguess + t*search_direction;
+            %eigenvalues_Hp = eig(Hp); %Tried to implement SOSC did not work yet
+            %for i = 1:length(Hp(1,:))
+                %if (norm(Jp)<10^-4 && eigenvalues_Hp(i)<0) %Backstop if SOSC is not fulfilled, at the moment via change of gamma, but better find new iguess
+                    %iguess = starting_point+[0.5;-0.5];
+                    %gamma = gamma/10000;
+                    %disp(['SOSC not fulfilled. Set gamma to ',num2str(gamma)])
+                    %break
+               %else
+    rguess=iguess;
+                %end
+            %end
+    [Jp,Hp] = calculate_derivatives(F,iguess);
+    n=n+1;
 end
