@@ -12,8 +12,6 @@ max_line_search_iterations = 10;
 test_function_type='ackley';
 %search method type: exact_Newton or constraint_Newton are possible
 solve_method = 'exact_Newton';
-%show 3dplot--> very calculation hungry but good to see whats wrong
-Show3dplot=false;
 
 
 %Casadi initialization
@@ -35,7 +33,7 @@ else
 end
 
 % starting point
-starting_point= [-1.8;-2]; % try -5;-5, -4;-4, -3;-3 ...
+starting_point= [3;3]; % try -5;-5, -4;-4, -3;-3 ...
 iguess = starting_point;
 x=iguess(1);
 y=iguess(2);
@@ -54,10 +52,11 @@ rguess=iguess; %rguess -> record guesses; iguess -> initial guess
 n=1;
 
 tic
-F = Function('Penalty',{X,Y},{f(X,Y)+0.5*gamma*g(X,Y)^2});
-Q = Function('Penalty_part',{X,Y},{0.5*gamma*g(X,Y)^2});
+F = Function('Penalty',{X,Y},{f(X,Y)+0.5*gamma*g(X,Y).^2});
+Q = Function('Penalty_part',{X,Y},{0.5*gamma*g(X,Y).^2});
 [Jp, Hp] = calculate_derivatives(F,rguess);
-while (norm(constraint_violation(length(constraint_violation))) > max_constraint_violation && n<=max_NLP_iterations && norm(Jp) > Newton_terminal_condition*10^-n)
+[Jf,~] = calculate_derivatives(f,rguess);
+while (norm(constraint_violation(length(constraint_violation))) > max_constraint_violation && n<=max_NLP_iterations && norm(Jf) > Newton_terminal_condition)%*10^-n)
     disp(['NLP-iteration: ',num2str(n)]);
         if strcmp(solve_method,'exact_Newton')
             rguess = solve_Penalty_NLP_Newton(F,Q,iguess,Newton_terminal_condition,max_Newton_iterations, max_line_search_iterations);
@@ -76,28 +75,28 @@ while (norm(constraint_violation(length(constraint_violation))) > max_constraint
             break
         end
 
-
+    n=n+1;
+    gamma=gamma*1.5;
+    F = Function('Penalty',{X,Y},{f(X,Y)+0.5*gamma*g(X,Y)^2});
+    iguess = rguess;
+    [Jp, Hp] = calculate_derivatives(F,iguess);
     %Try of including SOSC
-    %[Jp,Hp] = penalty_derivatives(F,iguess);
-    %for i = 1:length(Hp(1,:))
-         %if (norm(Jp)<10^-4 && eigenvalues_Hp(i)<0) %Backstop if SOSC is not fulfilled, at the moment via change of gamma, but better find new iguess
-              %iguess = iguess+[0.2;0.2];
+    %[Jf,Hf] = calculate_derivatives(f,rguess);
+    %eigenvalues_Hf = eig(Hf)
+    %for i = 1:length(Hf(1,:))%norm(Jp) < Newton_terminal_condition*10^-n
+         %if  (eigenvalues_Hf(i) <0 ) %Backstop if SOSC is not fulfilled, at the moment via change of gamma, but better find new iguess
               %gamma = gamma/1000;
               %disp(['SOSC not fulfilled. Set gamma to ',num2str(gamma)])
               %break
          %end
     %end
-    n=n+1;
-    gamma=gamma*10;
-    F = Function('Penalty',{X,Y},{f(X,Y)+0.5*gamma*g(X,Y)^2});
-    iguess = rguess;
-    [Jp, Hp] = calculate_derivatives(F,iguess);
+    
 end
 time_elapsed = toc;
 
 
 %plotting the results
-plots(solution_points, constraint_violation,test_function_type)
+plots(solution_points, constraint_violation,test_function_type, gamma)
 
 
 % output of the results:

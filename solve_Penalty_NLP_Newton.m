@@ -20,7 +20,7 @@ while (norm(Jp)> Newton_terminal_condition && n<=max_Newton_iterations)
     disp(['         Step length was: ',num2str(t)])
     iguess = iguess + t*search_direction;
     if (full(Q(iguess(1),iguess(2))) > full(Q(starting_point(1),starting_point(2))))
-        disp('Newton step converged away from feasible set! Return')
+        disp('Newton step converged away from feasible set! Return.')
         rguess = starting_point;
         break
     end
