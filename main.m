@@ -9,7 +9,7 @@ max_NLP_iterations =50;
 max_Newton_iterations = 100;
 max_line_search_iterations = 10;
 %test_function_type: ackley and rastrigin are possible
-test_function_type='rastrigin';
+test_function_type='ackley';
 %search method type: exact_Newton or constraint_Newton are possible
 solve_method = 'exact_Newton';
 %show 3dplot--> very calculation hungry but good to see whats wrong
@@ -35,7 +35,7 @@ else
 end
 
 % starting point
-starting_point= [-4;2]; % try -5;-5, -4;-4, -3;-3 ...
+starting_point= [-1.8;-2]; % try -5;-5, -4;-4, -3;-3 ...
 iguess = starting_point;
 x=iguess(1);
 y=iguess(2);
@@ -55,14 +55,14 @@ n=1;
 
 tic
 F = Function('Penalty',{X,Y},{f(X,Y)+0.5*gamma*g(X,Y)^2});
+Q = Function('Penalty_part',{X,Y},{0.5*gamma*g(X,Y)^2});
 [Jp, Hp] = calculate_derivatives(F,rguess);
 while (norm(constraint_violation(length(constraint_violation))) > max_constraint_violation && n<=max_NLP_iterations && norm(Jp) > Newton_terminal_condition*10^-n)
     disp(['NLP-iteration: ',num2str(n)]);
         if strcmp(solve_method,'exact_Newton')
-            rguess = solve_Penalty_NLP_Newton(F,iguess,Newton_terminal_condition,max_Newton_iterations, max_line_search_iterations);
+            rguess = solve_Penalty_NLP_Newton(F,Q,iguess,Newton_terminal_condition,max_Newton_iterations, max_line_search_iterations);
         elseif strcmp(solve_method,'constraint_Newton')% really include?
             error('Not yet implemented: Change calculation in the function "solve_Penalty_NLP_augmented_Newton"')
-            Q = Function('Penalty_part',{X,Y},{0.5*gamma*g(X,Y)^2});
             rguess = solve_Penalty_NLP_augmented_Newton(F,g,Q,gamma,iguess,Newton_terminal_condition,max_Newton_iterations,max_line_search_iterations);
         elseif strcmp(solve_method, 'Ipopt')%Solves the NLP directly with Ipopt
             rguess = solve_Penalty_NLP_IpOpt(test_function_type, gamma, iguess);
