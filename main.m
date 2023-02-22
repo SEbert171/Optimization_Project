@@ -8,10 +8,17 @@ max_NLP_iterations =50;
 %maximum number of Newton iterations:
 max_Newton_iterations = 100;
 max_line_search_iterations = 10;
-%test_function_type: ackley and rastrigin are possible
-test_function_type='ackley';
+% convergence criteria for newton method
+Newton_terminal_condition = 10^(-6);
+% %maximum constraint violation
+max_constraint_violation = 10 ^(-4);
+% tic
+%test_function_type: ackley, rastrigin, rosenbrock and convex are possible
+test_function_type='convex';
 %search method type: exact_Newton or constraint_Newton are possible
 solve_method = 'exact_Newton';
+% starting point
+starting_point= [2;2];
 
 
 %Casadi initialization
@@ -27,13 +34,16 @@ elseif (strcmp(test_function_type, 'rastrigin'))
 elseif (strcmp(test_function_type, 'rosenbrock'))
     f = Function('rosenbrock',{X,Y},{(1-X)^2+100*(Y-X^2)^2});
     g = Function('constraint',{X,Y},{X^2+Y^2-1.5}); % constraint function for Rosenbrock
+elseif strcmp(test_function_type, 'convex')
+    f = Function('convex',{X,Y},{X^2+Y^2+X*Y+exp(X)});
+    g = Function('constraint',{X,Y},{X^2+Y^2-1});
 else
-    msg='Test function not recognized. Use ackley, rastrigin or rosenbrock.';
+    msg='Test function not recognized. Use ackley, rastrigin, rosenbrock or convex.';
     error(msg);
 end
 
-% starting point
-starting_point= [3;3]; % try -5;-5, -4;-4, -3;-3 ...
+
+
 iguess = starting_point;
 x=iguess(1);
 y=iguess(2);
@@ -41,11 +51,6 @@ solution_points = iguess;
 constraint_violation = norm(full(evalf(g(iguess(1),iguess(2)))));
 % penalty parameter
 gamma=10;
-% convergence criteria for newton method
-Newton_terminal_condition = 10^(-6);
-% %maximum constraint violation
-max_constraint_violation = 10 ^(-4);
-% tic
 
 rguess=iguess; %rguess -> record guesses; iguess -> initial guess
 

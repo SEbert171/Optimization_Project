@@ -1,23 +1,42 @@
 clc;
 
 import casadi.*
+%Settings
+%test_function_type: ackley, rastrigin, rosenbrock and convex are possible
+test_function_type='convex';
+% starting point
+starting_point= [2;2];
+
+
 opti = casadi.Opti();
 
 X = opti.variable();
 Y = opti.variable();
 
-gamma=10000;
-
-%f = -20*exp(-0.2*sqrt(0.5*(X^2+Y^2+1e-6)))-exp(0.5*(cos(2*pi*X)+cos(2*pi*Y)))+exp(1)+20; % ackley function
-f = 20+X^2-10*cos(2*pi*X)+Y^2-10*cos(2*pi*Y); % rastrigin function
-g = X^2+Y^2-25; % constraint function for ackley
-% F=f+gamma*g^2;
+%Definition of the different functions as matlab functions for plotting
+%(equivalent with the definition in main
+if (strcmp(test_function_type, 'ackley'))
+    f = -20*exp(-0.2*sqrt(0.5*(X.^2+Y.^2 +10^(-3))))-exp(0.5*(cos(2*pi*X)+cos(2*pi*Y)))+exp(1)+20;
+    g = X.^2+Y.^2-25;% constraint function for ackley
+elseif (strcmp(test_function_type, 'rastrigin'))
+    f = 20+X.^2-10*cos(2*pi*X)+Y.^2-10*cos(2*pi*Y); % rastrigin function
+    g = X.^2+Y.^2-26.2144; % constraint function for rastrigin
+elseif (strcmp(test_function_type, 'rosenbrock'))
+    f = (1-X).^2+100*(Y-X.^2).^2;
+    g = X.^2+Y.^2-1.5; % constraint function for Rosenbrock
+elseif (strcmp(test_function_type, 'convex'))
+    f = X.^2+X.*Y+Y.^2+exp(X);
+    g = X.^2+Y.^2-1;
+else
+    msg='Test function not recognized. Use ackley, rastrigin or rosenbrock.';
+    error(msg);
+end
 
 tic
 opti.minimize(f)
  
-opti.set_initial(X, -3);
-opti.set_initial(Y, 3);
+opti.set_initial(X, starting_point(1));
+opti.set_initial(Y, starting_point(2));
 
 opti.subject_to(g==0)
 
