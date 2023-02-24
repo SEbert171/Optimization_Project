@@ -14,11 +14,11 @@ Newton_terminal_condition = 10^(-6);
 max_constraint_violation = 10 ^(-4);
 % tic
 %test_function_type: ackley, rastrigin, rosenbrock and convex are possible
-test_function_type='convex';
+test_function_type='rastrigin';
 %search method type: exact_Newton or constraint_Newton are possible
 solve_method = 'exact_Newton';
 % starting point
-starting_point= [2;2];
+starting_point= [2;3];
 
 
 %Casadi initialization
@@ -60,8 +60,7 @@ tic
 F = Function('Penalty',{X,Y},{f(X,Y)+0.5*gamma*g(X,Y).^2});
 Q = Function('Penalty_part',{X,Y},{0.5*gamma*g(X,Y).^2});
 [Jp, Hp] = calculate_derivatives(F,rguess);
-[Jf,~] = calculate_derivatives(f,rguess);
-while (norm(constraint_violation(length(constraint_violation))) > max_constraint_violation && n<=max_NLP_iterations && norm(Jf) > Newton_terminal_condition)%*10^-n)
+while (norm(constraint_violation(length(constraint_violation))) > max_constraint_violation && n<=max_NLP_iterations && norm(Jp) > Newton_terminal_condition*10^-n)
     disp(['NLP-iteration: ',num2str(n)]);
         if strcmp(solve_method,'exact_Newton')
             rguess = solve_Penalty_NLP_Newton(F,Q,iguess,Newton_terminal_condition,max_Newton_iterations, max_line_search_iterations);
@@ -85,16 +84,6 @@ while (norm(constraint_violation(length(constraint_violation))) > max_constraint
     F = Function('Penalty',{X,Y},{f(X,Y)+0.5*gamma*g(X,Y)^2});
     iguess = rguess;
     [Jp, Hp] = calculate_derivatives(F,iguess);
-    %Try of including SOSC
-    %[Jf,Hf] = calculate_derivatives(f,rguess);
-    %eigenvalues_Hf = eig(Hf)
-    %for i = 1:length(Hf(1,:))%norm(Jp) < Newton_terminal_condition*10^-n
-         %if  (eigenvalues_Hf(i) <0 ) %Backstop if SOSC is not fulfilled, at the moment via change of gamma, but better find new iguess
-              %gamma = gamma/1000;
-              %disp(['SOSC not fulfilled. Set gamma to ',num2str(gamma)])
-              %break
-         %end
-    %end
     
 end
 time_elapsed = toc;
@@ -118,3 +107,7 @@ fprintf('Norm of the constraint violation: %f\n\n', norm(constraint_violation(le
 disp('Solution points were:')
 disp(solution_points)
 disp(['Solution time was ',num2str(time_elapsed),' seconds'])
+
+if (~check_SOSC(rguess,test_function_type, Newton_terminal_condition))
+    disp('SOSC are not satisfied. The algorithm did not converge to a minimum!')
+end

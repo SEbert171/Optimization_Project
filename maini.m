@@ -1,11 +1,7 @@
-clc;
+function[solution, time_elapsed] = maini(starting_point, test_function_type, max_constraint_violation)
 
 import casadi.*
-%Settings
-%test_function_type: ackley, rastrigin, rosenbrock and convex are possible
-test_function_type='convex';
-% starting point
-starting_point= [2;2];
+
 
 
 opti = casadi.Opti();
@@ -37,10 +33,14 @@ opti.minimize(f)
  
 opti.set_initial(X, starting_point(1));
 opti.set_initial(Y, starting_point(2));
+%opti.constr_viol_tol = max_constraint_violation;
 
 opti.subject_to(g==0)
 
-opti.solver('ipopt');
+p_opts = struct();
+		s_opts = struct("constr_viol_tol", max_constraint_violation);
+
+opti.solver('ipopt', p_opts, s_opts);
 sol = opti.solve();
  
 x=sol.value(X);
@@ -51,3 +51,5 @@ disp('Solution point is:')
 disp([x;y]);
 
 disp(['Solution time was ',num2str(time_elapsed),' seconds'])
+solution = [x;y];
+

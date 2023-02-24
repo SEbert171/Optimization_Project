@@ -8,7 +8,7 @@ starting_point = iguess;
 [Jp,Hp] = calculate_derivatives(F,iguess);
 n=1;
 while (norm(Jp)> Newton_terminal_condition && n<=max_Newton_iterations)
-    disp(['    Newton iteration: ',num2str(n)]);
+    %disp(['    Newton iteration: ',num2str(n)]);
     search_direction = (-Hp\Jp.');
     %Line search with Armijo Backtracking
     t=1;
@@ -17,10 +17,10 @@ while (norm(Jp)> Newton_terminal_condition && n<=max_Newton_iterations)
           t=0.8*t;
           k = k+1;
     end
-    disp(['         Step length was: ',num2str(t)])
-    iguess = iguess + t*search_direction;
+    %disp(['         Step length was: ',num2str(t)])
+    iguess = iguess + t.*search_direction;
     if (full(Q(iguess(1),iguess(2))) > full(Q(starting_point(1),starting_point(2))))
-        disp('Newton step converged away from feasible set! Return.')
+        %disp('Newton step converged away from feasible set! Return.')
         rguess = starting_point;
         break
     end
