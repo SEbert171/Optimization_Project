@@ -12,7 +12,6 @@ max_line_search_iterations = 10;
 Newton_terminal_condition = 10^(-6);
 % %maximum constraint violation
 max_constraint_violation = 10 ^(-4);
-% tic
 %test_function_type: ackley, rastrigin, rosenbrock and convex are possible
 test_function_type='rosenbrock';
 %search method type: exact_Newton or constraint_Newton are possible
@@ -67,7 +66,7 @@ while (norm(constraint_violation(length(constraint_violation))) > max_constraint
         elseif strcmp(solve_method, 'Ipopt')%Solves the NLP directly with Ipopt
             rguess = solve_Penalty_NLP_IpOpt(test_function_type, gamma, iguess);
         else
-            error('Search direction method not recognized. Use exact_Newton, constraint_Newton or Ipopt.')
+            error('Search direction method not recognized. Use exact_Newton or Ipopt.')
         end
         
     solution_points = [solution_points rguess];

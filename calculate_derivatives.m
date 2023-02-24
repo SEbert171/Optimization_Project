@@ -2,9 +2,6 @@ function [Jf,Hf] = calculate_derivatives(f, x0)
 %calculates the jacobian for a 2-dimensional Casadi function f at the
 %point x0 in R^2
 import casadi.*
- 
-
-
 
 
  %jacobian of the function f

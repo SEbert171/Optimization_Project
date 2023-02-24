@@ -6,7 +6,7 @@ import casadi.*
 %set test function
 test_function_type = 'rosenbrock';
 %grid distance
-h = 0.1;
+h = 1;
 
 A(:,:,1)=zeros(10/h+1);
 A(:,:,2)=zeros(10/h+1);

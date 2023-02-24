@@ -1,5 +1,5 @@
 function [SOSC_satisfied] = check_SOSC(point,test_function_type, gamma, Newton_terminal_condition)
-%checks if the penalty function satisfies the second order sufficient condition
+%checks if the penalty function, given by test_function_type and gamma satisfies the second order sufficient condition
 %at point, where the jacobian is small
 import casadi.*
 

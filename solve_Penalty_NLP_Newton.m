@@ -23,18 +23,9 @@ while (norm(Jp)> Newton_terminal_condition && n<=max_Newton_iterations)
         %disp('Newton step converged away from feasible set! Return.')
         rguess = starting_point;
         break
-    end
-            %eigenvalues_Hp = eig(Hp); %Tried to implement SOSC did not work yet
-            %for i = 1:length(Hp(1,:))
-                %if (norm(Jp)<10^-4 && eigenvalues_Hp(i)<0) %Backstop if SOSC is not fulfilled, at the moment via change of gamma, but better find new iguess
-                    %iguess = starting_point+[0.5;-0.5];
-                    %gamma = gamma/10000;
-                    %disp(['SOSC not fulfilled. Set gamma to ',num2str(gamma)])
-                    %break
-               %else
+    end   
     rguess=iguess;
-                %end
-            %end
     [Jp,Hp] = calculate_derivatives(F,iguess);
+    
     n=n+1;
 end

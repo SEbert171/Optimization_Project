@@ -4,14 +4,12 @@ function [solution, time_elapsed, gamma] = main_test(starting_point, test_functi
 import casadi.*
 import casadi.*
 
-
 %Settings
 %maximum number of NLP iterations:
 max_NLP_iterations =50;
 %maximum number of Newton iterations:
 max_Newton_iterations = 100;
 max_line_search_iterations = 10;
-% tic
 %search method type: exact_Newton or Ipopt are possible
 solve_method = 'exact_Newton';
 
@@ -40,8 +38,6 @@ end
 
 
 iguess = starting_point;
-x=iguess(1);
-y=iguess(2);
 solution_points = iguess;
 constraint_violation = norm(full(evalf(g(iguess(1),iguess(2)))));
 % penalty parameter
@@ -79,8 +75,6 @@ while (norm(constraint_violation(length(constraint_violation))) > max_constraint
     
 end
 time_elapsed = toc;
-
-
 
 
 solution = rguess;

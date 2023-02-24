@@ -24,7 +24,7 @@ elseif (strcmp(test_function_type, 'convex'))
     f = X.^2+X.*Y+Y.^2+exp(X);
     g = X.^2+Y.^2-1;
 else
-    msg='Test function not recognized. Use ackley, rastrigin or rosenbrock.';
+    msg='Test function not recognized. Use ackley, rastrigin, rosenbrock or convex.';
     error(msg);
 end
 

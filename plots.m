@@ -2,7 +2,8 @@ function [] = plots(solution_points,constraint_violation,test_function_type, gam
 %Plots the results when the algortihm has found a solution
 
 %Settings
-Show3dplot = true;
+Show3dplot = false;
+showerrorplot = false;
 
 
 [X,Y] = meshgrid(-6:0.1:6,-6:0.1:6);
@@ -24,7 +25,7 @@ elseif (strcmp(test_function_type, 'convex'))
     f = X.^2+X.*Y+Y.^2+exp(X);
     g = X.^2+Y.^2-1;
 else
-    msg='Test function not recognized. Use ackley, rastrigin or rosenbrock.';
+    msg='Test function not recognized. Use ackley, rastrigin, rosenbrock or convex.';
     error(msg);
 end
 
@@ -90,26 +91,25 @@ title('first convergence steps of the algorithm')
 
 
 
+if showerrorplot
+    figure(5)
+    semilogy(0:length(constraint_violation)-1,constraint_violation,"-o")
+    title('Convergence of the constraint violation')
+    xlabel('NLP-steps')
+    ylabel('constraint violation')
 
-
- figure(5)
- semilogy(0:length(constraint_violation)-1,constraint_violation,"-o")
- title('Convergence of the constraint violation')
- xlabel('NLP-steps')
- ylabel('constraint violation')
-
- %Only for solution point [-5,0]!!
- error = ones(1,length(solution_points));
- difference = ones(2,length(solution_points));
-for i = 1:length(solution_points)
-    difference(:,i) = solution_points(:,i)-[-5;0];
-    error(i)= norm([difference(1,i) difference(2,i)]);
+    %Only for solution point [-5,0]!!
+    error = ones(1,length(solution_points));
+    difference = ones(2,length(solution_points));
+    for i = 1:length(solution_points)
+        difference(:,i) = solution_points(:,i)-[-5;0];
+        error(i)= norm([difference(1,i) difference(2,i)]);
+    end
+    figure(7)
+    semilogy(0:length(solution_points)-1,error,"-o")
+    title('Convergence of the error from the solution')
+    xlabel('NLP-steps')
+    ylabel('error')
 end
-figure(7)
-semilogy(0:length(solution_points)-1,error,"-o")
-title('Convergence of the error from the solution')
-xlabel('NLP-steps')
-ylabel('error')
-
 
 end
