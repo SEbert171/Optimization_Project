@@ -1,4 +1,4 @@
-function [solution, time_elapsed] = main_test(starting_point, test_function_type, max_constraint_violation)
+function [solution, time_elapsed, gamma] = main_test(starting_point, test_function_type, max_constraint_violation, Newton_terminal_condition)
 %Copy of the test function to implement multiple starting point analysis
 
 import casadi.*
@@ -11,10 +11,8 @@ max_NLP_iterations =50;
 %maximum number of Newton iterations:
 max_Newton_iterations = 100;
 max_line_search_iterations = 10;
-% convergence criteria for newton method
-Newton_terminal_condition = 10^(-6);
 % tic
-%search method type: exact_Newton or constraint_Newton are possible
+%search method type: exact_Newton or Ipopt are possible
 solve_method = 'exact_Newton';
 
 
@@ -61,9 +59,6 @@ while (norm(constraint_violation(length(constraint_violation))) > max_constraint
     disp(['NLP-iteration: ',num2str(n)]);
         if strcmp(solve_method,'exact_Newton')
             rguess = solve_Penalty_NLP_Newton(F,Q,iguess,Newton_terminal_condition,max_Newton_iterations, max_line_search_iterations);
-        elseif strcmp(solve_method,'constraint_Newton')% really include?
-            error('Not yet implemented: Change calculation in the function "solve_Penalty_NLP_augmented_Newton"')
-            rguess = solve_Penalty_NLP_augmented_Newton(F,g,Q,gamma,iguess,Newton_terminal_condition,max_Newton_iterations,max_line_search_iterations);
         elseif strcmp(solve_method, 'Ipopt')%Solves the NLP directly with Ipopt
             rguess = solve_Penalty_NLP_IpOpt(test_function_type, gamma, iguess);
         else

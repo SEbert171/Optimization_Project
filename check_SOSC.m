@@ -1,5 +1,5 @@
-function [SOSC_satisfied] = check_SOSC(point,test_function_type, Newton_terminal_condition)
-%checks if function_type satisfies the second order sufficient condition
+function [SOSC_satisfied] = check_SOSC(point,test_function_type, gamma, Newton_terminal_condition)
+%checks if the penalty function satisfies the second order sufficient condition
 %at point, where the jacobian is small
 import casadi.*
 
@@ -24,7 +24,9 @@ else
     error(msg);
 end
 
-[~,Hf] = calculate_derivatives(f,point);
+F = Function('Penalty',{X,Y},{f(X,Y)+0.5*gamma*g(X,Y)^2});
+
+[~,Hf] = calculate_derivatives(F,point);
 eig_Hf = eig(Hf);
 negative_eigenvalues = (eig_Hf < Newton_terminal_condition);
 if (sum(negative_eigenvalues > 0))

@@ -4,9 +4,9 @@ import casadi.*
 
 
 %set test function
-test_function_type = 'convex';
+test_function_type = 'rastrigin';
 %grid distance
-h = 5;
+h = 1;
 
 A(:,:,1)=zeros(10/h+1);
 A(:,:,2)=zeros(10/h+1);
@@ -63,7 +63,7 @@ end
 
 
 % plots:
-figure(1)
+figure(8)
 contour(X,Y,f1, 'Fill', 'On');
 hold on
 
@@ -71,16 +71,20 @@ for i = 1:10/h+1
     for j = 1:10/h+1
         x = h*i-5-h;
         y = h*j-5-h;
-        [solution,~] = main_test([x;y], test_function_type, 10^(-4));
+        [solution,~, gamma] = main_test([x;y], test_function_type, 10^(-4), (10^-6));
         A(i,j,:) = solution;
-        if (norm(full(g(solution(1),solution(2)))) > 10^(-4) || ~check_SOSC(solution,test_function_type,10^(-4)))
-            plot(x,y,'*r')%plot red if it did not converge to the constraint
+        if (norm(full(g(solution(1),solution(2)))) <= 10^(-4) && check_SOSC(solution,test_function_type,gamma,10^(-4)))
+            plot(x,y,'*g')%plot green if it did converge to the constraint and the SOSC is satisfied
+            hold on
+            converged = true;
+        elseif (norm(full(g(solution(1),solution(2)))) <= 10^(-4))
+            plot(x,y,'*y')%plot yellow if it did converge to the constraint
             hold on
             converged = false;
         else
-            plot(x,y,'*g')%plot green if it did converge to the constraint
+            plot(x,y,'*r')%plot red if it did not converge to the constraint
             hold on
-            converged = true;
+            converged = false;
         end
         disp(['SOLVED PROBLEM FOR [X,Y]=[',num2str(x),',',num2str(y),']'])
     end
@@ -92,21 +96,19 @@ solution_Newton = ones(2,7);
 solution_Ipopt = ones(2,7);
 difference = ones(1,7);
 for i = 2:8
-    [solution_Newton(:,i-3),time_Newton(i-3)] = main_test([4;1],'rastrigin',10^(-i));
-    [solution_Ipopt(:,i-3),time_Ipopt(i-3)] = maini([4;1],'rastrigin',10^(-i));
-    difference(i-3) = norm(solution_Newton(:,i-3)-solution_Ipopt(:,i-3));
+    [solution_Newton(:,i-1),time_Newton(i-1)] = main_test([2;3],'rastrigin',10^(-i), 10^(-6));
+    [solution_Ipopt(:,i-1),time_Ipopt(i-1)] = maini([2;3],'rastrigin',10^(-i));
 end
 
 figure(2)
-loglog(10.^(-4:-1:-10),time_Newton,'-g')
+semilogy(2:8,time_Newton,'-g')
 hold on
-loglog(10.^(-4:-1:-10),time_Ipopt,'-r')
+semilogy(2:8,time_Ipopt,'-r')
+legend('Quadratic Penalty method','IpOpt')
+title('Computation time comparison')
+xlabel('exponent of max constraint violation')
+ylabel('Required Computation time in seconds')
 
-solution_Ipopt
-solution_Newton
-difference
-figure(3)
-plot(1:7,difference)
 
 
 

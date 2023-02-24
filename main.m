@@ -14,11 +14,11 @@ Newton_terminal_condition = 10^(-6);
 max_constraint_violation = 10 ^(-4);
 % tic
 %test_function_type: ackley, rastrigin, rosenbrock and convex are possible
-test_function_type='rastrigin';
+test_function_type='rosenbrock';
 %search method type: exact_Newton or constraint_Newton are possible
 solve_method = 'exact_Newton';
 % starting point
-starting_point= [2;3];
+starting_point= [-1;-1];
 
 
 %Casadi initialization
@@ -64,9 +64,6 @@ while (norm(constraint_violation(length(constraint_violation))) > max_constraint
     disp(['NLP-iteration: ',num2str(n)]);
         if strcmp(solve_method,'exact_Newton')
             rguess = solve_Penalty_NLP_Newton(F,Q,iguess,Newton_terminal_condition,max_Newton_iterations, max_line_search_iterations);
-        elseif strcmp(solve_method,'constraint_Newton')% really include?
-            error('Not yet implemented: Change calculation in the function "solve_Penalty_NLP_augmented_Newton"')
-            rguess = solve_Penalty_NLP_augmented_Newton(F,g,Q,gamma,iguess,Newton_terminal_condition,max_Newton_iterations,max_line_search_iterations);
         elseif strcmp(solve_method, 'Ipopt')%Solves the NLP directly with Ipopt
             rguess = solve_Penalty_NLP_IpOpt(test_function_type, gamma, iguess);
         else
@@ -108,6 +105,6 @@ disp('Solution points were:')
 disp(solution_points)
 disp(['Solution time was ',num2str(time_elapsed),' seconds'])
 
-if (~check_SOSC(rguess,test_function_type, Newton_terminal_condition))
+if (~check_SOSC(rguess,test_function_type, gamma, Newton_terminal_condition))
     disp('SOSC are not satisfied. The algorithm did not converge to a minimum!')
 end
